@@ -16,8 +16,14 @@ import lombok.NoArgsConstructor;
 public class AppointmentResponseDTO {
     private Long id;
 
+    @NotNull
+    private Long doctorId;
+
     @NotBlank
     private String doctorName;
+
+    @NotNull
+    private Long patientId;
 
     @NotBlank
     private String patientName;

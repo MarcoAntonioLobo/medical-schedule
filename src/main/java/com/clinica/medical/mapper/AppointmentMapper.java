@@ -24,10 +24,13 @@ public class AppointmentMapper {
     public AppointmentResponseDTO toResponse(Appointment appointment) {
         return AppointmentResponseDTO.builder()
                 .id(appointment.getId())
+                .doctorId(appointment.getDoctor().getId())
                 .doctorName(appointment.getDoctor().getName())
+                .patientId(appointment.getPatient().getId())
                 .patientName(appointment.getPatient().getName())
                 .dateTime(appointment.getDateTime())
                 .notes(appointment.getNotes())
                 .build();
     }
+
 }

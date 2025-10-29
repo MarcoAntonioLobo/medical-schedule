@@ -3,6 +3,7 @@ package com.clinica.medical.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import com.clinica.medical.model.Doctor;
 import com.clinica.medical.repository.DoctorRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -33,11 +35,18 @@ public class DoctorController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a new doctor", description = "Creates a new doctor in the system", tags = { "Doctors" })
+    @Operation(summary = "Create a new doctor", description = "Creates a new doctor in the system", tags = { "Doctors" },
+               responses = {
+                   @ApiResponse(responseCode = "201", description = "Doctor created successfully"),
+                   @ApiResponse(responseCode = "400", description = "Invalid input")
+               })
     public ResponseEntity<DoctorDTO> create(@Valid @RequestBody DoctorCreateDTO dto) {
         Doctor saved = doctorRepository.save(new Doctor(null, dto.getName(), dto.getSpecialty(), dto.getCrm()));
-        return ResponseEntity.ok(new DoctorDTO(saved.getId(), saved.getName(), saved.getSpecialty(), saved.getCrm()));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)  // retorna 201
+                .body(new DoctorDTO(saved.getId(), saved.getName(), saved.getSpecialty(), saved.getCrm()));
     }
+
 
     @GetMapping("/{id}")
     @Operation(summary = "Get doctor by ID", description = "Retrieves a doctor by their ID", tags = { "Doctors" })
@@ -57,7 +66,15 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete doctor by ID", description = "Deletes a doctor from the system by their ID", tags = { "Doctors" })
+    @Operation(
+        summary = "Delete doctor by ID", 
+        description = "Deletes a doctor from the system by their ID", 
+        tags = { "Doctors" },
+        responses = {
+            @ApiResponse(responseCode = "204", description = "Doctor deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Doctor not found")
+        }
+    )
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!doctorRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -65,4 +82,5 @@ public class DoctorController {
         doctorRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
 }

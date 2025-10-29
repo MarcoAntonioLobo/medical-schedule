@@ -63,11 +63,23 @@ public class AppointmentServiceUnitTest {
         when(patientRepository.findById(dto.getPatientId())).thenReturn(Optional.of(patient));
         when(appointmentRepository.existsByDoctorIdAndDateTime(dto.getDoctorId(), dto.getDateTime())).thenReturn(false);
         when(mapper.toEntity(dto, doctor, patient)).thenReturn(appointment);
-        when(mapper.toResponse(appointment)).thenReturn(new AppointmentResponseDTO(1L, doctor.getName(), patient.getName(), appointment.getDateTime(), "Notes"));
         when(appointmentRepository.save(appointment)).thenReturn(appointment);
+        when(mapper.toResponse(appointment)).thenReturn(
+            new AppointmentResponseDTO(
+                1L,
+                doctor.getId(),
+                doctor.getName(),
+                patient.getId(),
+                patient.getName(),
+                appointment.getDateTime(),
+                "Notes"
+            )
+        );
 
         AppointmentResponseDTO response = appointmentService.create(dto);
         assertThat(response.getDoctorName()).isEqualTo("Dr. Test");
+        assertThat(response.getDoctorId()).isEqualTo(1L);
+        assertThat(response.getPatientId()).isEqualTo(1L);
     }
 
     @Test
@@ -100,10 +112,21 @@ public class AppointmentServiceUnitTest {
     @Test
     void getById_success() {
         when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
-        when(mapper.toResponse(appointment)).thenReturn(new AppointmentResponseDTO(1L, doctor.getName(), patient.getName(), appointment.getDateTime(), "Notes"));
+        when(mapper.toResponse(appointment)).thenReturn(
+            new AppointmentResponseDTO(
+                1L,
+                doctor.getId(),
+                doctor.getName(),
+                patient.getId(),
+                patient.getName(),
+                appointment.getDateTime(),
+                "Notes"
+            )
+        );
 
         AppointmentResponseDTO response = appointmentService.getById(1L);
         assertThat(response.getPatientName()).isEqualTo("Patient Test");
+        assertThat(response.getDoctorId()).isEqualTo(1L);
     }
 
     @Test
@@ -116,8 +139,12 @@ public class AppointmentServiceUnitTest {
     void getAll_success() {
         Appointment anotherAppointment = Appointment.builder().id(2L).doctor(doctor).patient(patient).dateTime(LocalDateTime.now()).notes("Another").build();
         when(appointmentRepository.findAll()).thenReturn(Arrays.asList(appointment, anotherAppointment));
-        when(mapper.toResponse(appointment)).thenReturn(new AppointmentResponseDTO(1L, doctor.getName(), patient.getName(), appointment.getDateTime(), "Notes"));
-        when(mapper.toResponse(anotherAppointment)).thenReturn(new AppointmentResponseDTO(2L, doctor.getName(), patient.getName(), anotherAppointment.getDateTime(), "Another"));
+        when(mapper.toResponse(appointment)).thenReturn(
+            new AppointmentResponseDTO(1L, doctor.getId(), doctor.getName(), patient.getId(), patient.getName(), appointment.getDateTime(), "Notes")
+        );
+        when(mapper.toResponse(anotherAppointment)).thenReturn(
+            new AppointmentResponseDTO(2L, doctor.getId(), doctor.getName(), patient.getId(), patient.getName(), anotherAppointment.getDateTime(), "Another")
+        );
 
         List<AppointmentResponseDTO> list = appointmentService.getAll();
         assertThat(list).hasSize(2);
@@ -130,9 +157,11 @@ public class AppointmentServiceUnitTest {
         when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
         when(doctorRepository.findById(dto.getDoctorId())).thenReturn(Optional.of(doctor));
         when(patientRepository.findById(dto.getPatientId())).thenReturn(Optional.of(patient));
-        when(appointmentRepository.existsByDoctorIdAndDateTime(dto.getDoctorId(), dto.getDateTime())).thenReturn(false);
+        when(appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(dto.getDoctorId(), dto.getDateTime(), 1L)).thenReturn(false);
         when(appointmentRepository.save(appointment)).thenReturn(appointment);
-        when(mapper.toResponse(appointment)).thenReturn(new AppointmentResponseDTO(1L, doctor.getName(), patient.getName(), dto.getDateTime(), "Updated Notes"));
+        when(mapper.toResponse(appointment)).thenReturn(
+            new AppointmentResponseDTO(1L, doctor.getId(), doctor.getName(), patient.getId(), patient.getName(), dto.getDateTime(), "Updated Notes")
+        );
 
         AppointmentResponseDTO response = appointmentService.update(1L, dto);
         assertThat(response.getNotes()).isEqualTo("Updated Notes");
@@ -144,9 +173,8 @@ public class AppointmentServiceUnitTest {
 
         when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
         when(doctorRepository.findById(dto.getDoctorId())).thenReturn(Optional.of(doctor));
-        when(patientRepository.findById(dto.getPatientId())).thenReturn(Optional.of(patient));        // simula duplicidade corretamente
-        when(appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(dto.getDoctorId(), dto.getDateTime(), 1L))
-                .thenReturn(true);
+        when(patientRepository.findById(dto.getPatientId())).thenReturn(Optional.of(patient));
+        when(appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(dto.getDoctorId(), dto.getDateTime(), 1L)).thenReturn(true);
 
         assertThrows(DuplicateResourceException.class, () -> appointmentService.update(1L, dto));
     }

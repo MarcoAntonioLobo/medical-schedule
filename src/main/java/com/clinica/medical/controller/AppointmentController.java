@@ -1,5 +1,6 @@
 package com.clinica.medical.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import com.clinica.medical.dto.AppointmentResponseDTO;
 import com.clinica.medical.service.AppointmentService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -32,31 +34,50 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a new appointment", description = "Creates a new appointment in the system", tags = { "Appointments" })
+    @Operation(
+        summary = "Create a new appointment",
+        description = "Creates a new appointment in the system",
+        tags = { "Appointments" },
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Appointment created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+        }
+    )
     public ResponseEntity<AppointmentResponseDTO> create(@Valid @RequestBody AppointmentCreateDTO dto) {
-        return ResponseEntity.ok(appointmentService.create(dto));
+        AppointmentResponseDTO created = appointmentService.create(dto);
+        return ResponseEntity
+                .created(URI.create("/appointments/" + created.getId()))
+                .body(created);
+    }
+
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an existing appointment", description = "Updates an existing appointment by ID", tags = { "Appointments" })
+    public ResponseEntity<AppointmentResponseDTO> update(@PathVariable Long id,
+                                                         @Valid @RequestBody AppointmentCreateDTO dto) {
+        AppointmentResponseDTO updated = appointmentService.update(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get appointment by ID", description = "Retrieves an appointment by its ID", tags = { "Appointments" })
     public ResponseEntity<AppointmentResponseDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(appointmentService.getById(id));
     }
 
     @GetMapping
-    @Operation(summary = "Get all appointments", description = "Retrieves all appointments in the system", tags = { "Appointments" })
     public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
         return ResponseEntity.ok(appointmentService.getAll());
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update an existing appointment", description = "Updates an existing appointment by ID", tags = { "Appointments" })
-    public ResponseEntity<AppointmentResponseDTO> update(@PathVariable Long id, @Valid @RequestBody AppointmentCreateDTO dto) {
-        return ResponseEntity.ok(appointmentService.update(id, dto));
-    }
-
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete an appointment by ID", description = "Deletes an appointment from the system by its ID", tags = { "Appointments" })
+    @Operation(
+        summary = "Delete an appointment by ID",
+        description = "Deletes an appointment from the system by its ID",
+        responses = {
+            @ApiResponse(responseCode = "204", description = "Appointment deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Appointment not found")
+        }
+    )
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         appointmentService.delete(id);
         return ResponseEntity.noContent().build();
